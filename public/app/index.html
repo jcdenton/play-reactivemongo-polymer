@@ -7,99 +7,66 @@
 
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
 
-  <script src="../components/webcomponentsjs/webcomponents.js">
-  </script>
-    <link rel="import"
-    href="../components/polymer/polymer.html">
-    <link rel="import"
-    href="../components/layout/layout.html">
-  <link rel="import"
-    href="../components/paper-tabs/paper-tabs.html">
-  <link rel="import" href="../app/post-list.html">
+  <script src="../components/webcomponentsjs/webcomponents-lite.js"></script>
+  <link rel="import" href="../components/polymer/polymer.html">
+  <link rel="import" href="../components/paper-tabs/paper-tabs.html">
+  <link rel="import" href="../components/paper-tabs/paper-tab.html">
 
+  <link rel="import" href="../app/post-list.html">
   <style>
-  html,body {
-    height: 100%;
-    margin: 0;
-    background-color: #E5E5E5;
-    font-family: 'RobotoDraft', sans-serif;
-  }
-  .header  {
-    background: #03a9f4;
-    color: white;
-  }
-  #tabs {
-    width: 100%;
-    margin: 0;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    text-transform: uppercase;
-    color: white;
-  }
-  .container {
-    width: 80%;
-    margin: 50px auto;
-  }
-  @media (min-width: 481px) {
-    #tabs {
-      width: 200px;
+    html,body {
+      height: 100%;
+      margin: 0;
+      background-color: #E5E5E5;
+      font-family: 'RobotoDraft', sans-serif;
     }
+
+
+    paper-tabs, core-toolbar {
+      background-color: #00bcd4;
+      color: #fff;
+      box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    core-toolbar paper-tabs {
+      box-shadow: none;
+    }
+
+    paper-tabs[noink][nobar] paper-tab.core-selected {
+      color: #ffff8d;
+    }
+
+    paper-tabs[alignBottom] {
+      box-shadow: 0px -2px 6px rgba(0, 0, 0, 0.15);
+    }
+
     .container {
-      width: 400px;
+      margin-top:30px;
     }
-  }
   </style>
 
 </head>
 
 <body>
 
-  <div class="header flex">
-      <paper-tabs id="tabs" selected="0" tabindex="0">
-        <paper-tab id="tab1" name="all">All</paper-tab>
-        <paper-tab id="tab2" name="favorites">Favorites</paper-tab>
-     </paper-tabs>
-  </div>
+<paper-tabs id="tabs" selected="0" tabindex="0" noink>
+  <paper-tab name="all">All</paper-tab>
+  <paper-tab name="favorites">Favorites</paper-tab>
+</paper-tabs>
 
-  <div class="container layout vertical center">
-    <post-list show="all"></post-list>
-  </div>
+<div class="container layout vertical center">
+  <post-list show="all"></post-list>
+</div>
 
-
-  <script>
+<script>
   var tabs = document.querySelector('paper-tabs');
   var list = document.querySelector('post-list');
 
-  var tabcontrols = document.querySelectorAll('paper-tab');
-  var FORWARD = 1;
-  var BACKWARD = -1;
-
-  function cycleTabs(step) {
-    var tabIndex = Number(tabs.selected) + step % tabcontrols.length;
-    if (tabIndex < 0) tabIndex = tabcontrols.length - 1;
-    tabcontrols[tabs.selected].setAttribute('aria-selected', false);
-    tabs.selected = tabIndex;
-    tabcontrols[tabIndex].setAttribute('aria-selected', true);
-  }
-
-  tabs.addEventListener('core-select', function() {
-      list.show = tabs.selected == 0 ? "all" : "favorites";
+  tabs.addEventListener('iron-select', function() {
+    list.show = tabs.selected == 0 ? "all" : "favorites";
   });
 
-  tabs.addEventListener('keydown', function(event) {
-      var key = event.key ? event.key.toLowerCase : ''; 
-      if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey)
-        return;
-      if (key == 'left' || event.keyCode == 37 || event.detail.key == 'left') {
-        cycleTabs(BACKWARD);       
-      }
-      if (key == 'right' || event.keyCode == 39 || event.detail.key == 'right') {
-        cycleTabs(FORWARD);       
-      }
-  });
- </script>
+</script>
 </body>
 
 </html>

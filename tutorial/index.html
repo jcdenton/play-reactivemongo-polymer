@@ -50,16 +50,16 @@
         <p>
             The application tier is delivered by a simple <code>Play</code> app.
             This way you can easily take advantage of <code>Play</code>'s ecosystem, eg. add some plugins or other benefits, such as Akka, CoffeScript support Web Sockets and many, many more.
-            The template has one controller: <a href="#code/app/controllers/Posts.scala" class="shortcut">Posts</a>.
-            This class extends <code>Controller</code> and <code>MongoController</code> which uses <code>Play-ReactiveMongo</code> plugin.
+            The template has one <code>Controller</code>: <a href="#code/app/controllers/Posts.scala" class="shortcut">Posts</a>.
+            It has <code>PostRepo</code> which uses <code>Play-ReactiveMongo</code> plugin under the hood.
 
 
         </p>
         <p>
-            <code>MongoController</code> provides <code>db</code> object to access specific database collections:
+            <code>PostRepo</code> provides <code>db</code> object to access specific database collections:
             <pre>
                 <code>
-    def collection = db.collection[JSONCollection]("posts")
+                    protected def collection = db.collection[JSONCollection]("posts")
                 </code>
             </pre>
         </p>
@@ -68,47 +68,90 @@
             To get data from the database use <code>list</code> method. It's use looks like this:
             <pre>
                 <code>
-    def list = Action.async {implicit request =>
-      collection.find(Json.obj())
-        .cursor[JsObject]
-        .collect[List]()
-        .map(posts => Ok(Json.toJson(posts)))
-    }
+                    def list = Action.async {implicit request =>
+                        postRepo.find()
+                        .map(posts => Ok(Json.toJson(posts.reverse)))
+                        .recover {case PrimaryUnavailableException => InternalServerError("Please install MongoDB")}
+                    }
                 </code>
             </pre>
             In this case the response is json with all posts from the database collection:
             <pre>
                 <code>
-    [
-        {
-        "uid": 1,
-        "text" : "Have you heard about the Web Components revolution?",
-        "username" : "Eric",
-        "avatar" : "../images/avatar-01.svg",
-        "favorite": false
-        },
-        {
-        "uid": 2,
-        "text" : "Loving this Polymer thing.",
-        "username" : "Rob",
-        "avatar" : "../images/avatar-02.svg",
-        "favorite": false
-        },
-        ...
-    ]
+                    [
+                        {
+                        "_id": {"$oid":"556848238600001401dfead6"},
+                        "text" : "Have you heard about the Web Components revolution?",
+                        "username" : "Eric",
+                        "avatar" : "../images/avatar-01.svg",
+                        "favorite": false
+                        },
+                        {
+                        "uid": {"$oid":"556848238600001401dfead7"},
+                        "text" : "Loving this Polymer thing.",
+                        "username" : "Rob",
+                        "avatar" : "../images/avatar-02.svg",
+                        "favorite": false
+                        },
+                        ...
+                    ]
                 </code>
             </pre>
         </p>
 
         <p>
-            Another method is <code>like</code>. In the template it accepts json body with favorite, boolean flag. The method saves this flag in the database collection:
+            To <code>like</code> post : In the template it accepts json body with favorite, boolean flag. The method saves this flag in the database collection:
             <pre>
                 <code>
-    def like(id: Int) = Action.async(BodyParsers.parse.json) { implicit request =>
-        val value = (request.body \ "favorite").as[Boolean]
-        collection.update(BSONDocument("uid" -> id), BSONDocument("$set" -> BSONDocument("favorite" -> value)))
-            .map(le => Ok(Json.obj("success" -> le.ok)))
-    }
+                    def like(id: String) = Action.async(BodyParsers.parse.json) { implicit request =>
+                        val value = (request.body \ Favorite).as[Boolean]
+                        postRepo.update(BSONDocument(Id -> BSONObjectID(id)), BSONDocument("$set" -> BSONDocument(Favorite -> value)))
+                        .map(le => Ok(Json.obj("success" -> le.ok)))
+                    }
+                </code>
+            </pre>
+        </p>
+
+        <p>
+            To <code>update</code> post's message : In the template it accepts json body with text, String parameter:
+            <pre>
+                <code>
+                    def update(id: String) = Action.async(BodyParsers.parse.json) { implicit request =>
+                        val value = (request.body \ Text).as[String]
+                        postRepo.update(BSONDocument(Id -> BSONObjectID(id)), BSONDocument("$set" -> BSONDocument(Text -> value)))
+                        .map(le => Ok(Json.obj("success" -> le.ok)))
+                    }
+                </code>
+            </pre>
+        </p>
+
+        <p>
+            To <code>delete</code> post :
+            <pre>
+                <code>
+                    def delete(id: String) = Action.async {
+                        postRepo.remove(BSONDocument(Id -> BSONObjectID(id)))
+                        .map(le => RedirectAfterPost(le, routes.Posts.list()))
+                    }
+                </code>
+            </pre>
+        </p>
+
+        <p>
+            To <code>add</code> post :
+            <pre>
+                <code>
+                    def add = Action.async(BodyParsers.parse.json) { implicit request =>
+                        val username = (request.body \ Username).as[String]
+                        val text = (request.body \ Text).as[String]
+                        val avatar = (request.body \ Avatar).as[String]
+                        postRepo.save(BSONDocument(
+                            Text -> text,
+                            Username -> username,
+                            Avatar -> avatar,
+                            Favorite -> false
+                        )).map(le => Redirect(routes.Posts.list()))
+                    }
                 </code>
             </pre>
         </p>
@@ -117,8 +160,11 @@
             To expose REST API in Play framework the <a href="#code/conf/routes" class="shortcut">routes</a> file has been configured:
             <pre>
                 <code>
-    GET /api/posts              controllers.Posts.list
-    PUT /api/post/:id/favor     controllers.Posts.favor(id: Int)
+                    GET     /api/posts                  controllers.Posts.list
+                    PATCH   /api/post/:id/like          controllers.Posts.like(id: String)
+                    PATCH   /api/post/:id               controllers.Posts.update(id: String)
+                    POST    /api/post                   controllers.Posts.add
+                    DELETE  /api/post/:id               controllers.Posts.delete(id : String)
                 </code>
             </pre>
         </p>

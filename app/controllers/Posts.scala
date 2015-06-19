@@ -1,30 +1,65 @@
 package controllers
 
-import play.api.libs.json.{JsObject, Json}
-import play.api.mvc.{BodyParsers, Action, Controller}
-import play.modules.reactivemongo.MongoController
-import play.modules.reactivemongo.json.collection.JSONCollection
+import backend.{PostMongoRepo, PostRepo}
+import controllers.PostFields._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import reactivemongo.bson.BSONDocument
-import play.modules.reactivemongo.json.BSONFormats._
-import play.modules.reactivemongo.json.ImplicitBSONHandlers._
+import play.api.libs.json.Json
+import play.api.mvc._
+import reactivemongo.bson.{BSONObjectID, BSONDocument}
 import reactivemongo.core.actors.Exceptions.PrimaryUnavailableException
+import reactivemongo.core.commands.LastError
 
-object Posts extends Controller with MongoController {
+trait Posts {
+  this: Controller =>
 
-  def collection = db.collection[JSONCollection]("posts")
+  def postRepo: PostRepo = PostMongoRepo
 
   def list = Action.async {implicit request =>
-    collection.find(Json.obj())
-      .cursor[JsObject]
-      .collect[List]()
-      .map(posts => Ok(Json.toJson(posts)))
-      .recover {case PrimaryUnavailableException => InternalServerError("Pleas install MongoDB")}
+    postRepo.find()
+      .map(posts => Ok(Json.toJson(posts.reverse)))
+      .recover {case PrimaryUnavailableException => InternalServerError("Please install MongoDB")}
   }
 
-  def like(id: Int) = Action.async(BodyParsers.parse.json) { implicit request =>
-    val value = (request.body \ "favorite").as[Boolean]
-    collection.update(BSONDocument("uid" -> id), BSONDocument("$set" -> BSONDocument("favorite" -> value)))
+  def like(id: String) = Action.async(BodyParsers.parse.json) { implicit request =>
+    val value = (request.body \ Favorite).as[Boolean]
+    postRepo.update(BSONDocument(Id -> BSONObjectID(id)), BSONDocument("$set" -> BSONDocument(Favorite -> value)))
       .map(le => Ok(Json.obj("success" -> le.ok)))
   }
+
+  def update(id: String) = Action.async(BodyParsers.parse.json) { implicit request =>
+    val value = (request.body \ Text).as[String]
+    postRepo.update(BSONDocument(Id -> BSONObjectID(id)), BSONDocument("$set" -> BSONDocument(Text -> value)))
+      .map(le => Ok(Json.obj("success" -> le.ok)))
+  }
+
+  def delete(id: String) = Action.async {
+    postRepo.remove(BSONDocument(Id -> BSONObjectID(id)))
+      .map(le => RedirectAfterPost(le, routes.Posts.list()))
+  }
+
+  private def RedirectAfterPost(lastError: LastError, call: Call): Result =
+    if (lastError.inError) InternalServerError("%s".format(lastError))
+    else Redirect(call)
+
+  def add = Action.async(BodyParsers.parse.json) { implicit request =>
+    val username = (request.body \ Username).as[String]
+    val text = (request.body \ Text).as[String]
+    val avatar = (request.body \ Avatar).as[String]
+    postRepo.save(BSONDocument(
+      Text -> text,
+      Username -> username,
+      Avatar -> avatar,
+      Favorite -> false
+    )).map(le => Redirect(routes.Posts.list()))
+  }
+}
+
+object Posts extends Controller with Posts
+
+object PostFields {
+  val Id = "_id"
+  val Text = "text"
+  val Username = "username"
+  val Avatar = "avatar"
+  val Favorite = "favorite"
 }

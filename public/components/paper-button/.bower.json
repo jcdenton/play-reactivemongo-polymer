@@ -1,25 +1,48 @@
 {
   "name": "paper-button",
+  "version": "0.9.3",
+  "description": "Material design button",
+  "authors": [
+    "The Polymer Authors"
+  ],
+  "keywords": [
+    "web-components",
+    "web-component",
+    "polymer",
+    "paper",
+    "button"
+  ],
+  "main": "paper-button.html",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/PolymerElements/paper-button"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/PolymerElements/paper-button",
   "dependencies": {
-    "polymer": "Polymer/polymer#master",
-    "core-a11y-keys": "Polymer/core-a11y-keys#master",
-    "core-focusable": "Polymer/core-focusable#master",
-    "core-icon": "Polymer/core-icon#master",
-    "paper-ripple": "Polymer/paper-ripple#master",
-    "paper-shadow": "Polymer/paper-shadow#master"
+    "paper-ripple": "polymerelements/paper-ripple#^0.9.0",
+    "paper-material": "polymerelements/paper-material#^0.9.0",
+    "paper-behaviors": "polymerelements/paper-behaviors#^0.9.0",
+    "polymer": "Polymer/polymer#^0.9.0"
   },
   "devDependencies": {
-    "web-component-tester": "Polymer/web-component-tester#^1.1.4"
+    "iron-component-page": "polymerelements/iron-component-page#^0.9.0",
+    "test-fixture": "polymerelements/test-fixture#^0.9.0",
+    "iron-icon": "polymerelements/iron-icon#^0.9.0",
+    "iron-icons": "polymerelements/iron-icons#^0.9.0",
+    "iron-test-helpers": "polymerelements/iron-test-helpers#^0.9.0",
+    "paper-styles": "polymerelements/paper-styles#^0.9.0",
+    "web-component-tester": "*",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0"
   },
-  "homepage": "https://github.com/Polymer/paper-button",
-  "_release": "8cc8a417b8",
+  "_release": "0.9.3",
   "_resolution": {
-    "type": "branch",
-    "branch": "master",
-    "commit": "8cc8a417b8944dc4fec299c19b1e671ed8cd0967"
+    "type": "version",
+    "tag": "v0.9.3",
+    "commit": "22a122fa6455074d9f1cb4131bc747a808d57f11"
   },
-  "_source": "git://github.com/Polymer/paper-button.git",
-  "_target": "master",
-  "_originalSource": "Polymer/paper-button"
+  "_source": "git://github.com/PolymerElements/paper-button.git",
+  "_target": "~0.9",
+  "_originalSource": "PolymerElements/paper-button"
 }
