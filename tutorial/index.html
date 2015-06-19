@@ -189,16 +189,18 @@
             Polymer elements encapsulate template for view and script for behavior:
             <pre>
                 <code>
-    &lt;polymer-element name="post-card"&gt;
-        &lt;template&gt;
-            ...
-        &lt;/template&gt;
-        &lt;script&gt;
-          Polymer({
-           ...
-          });
-        &lt;/script&gt;
-    &lt;/polymer-element&gt;
+            &lt;dom-module id="unique-id"&gt;
+                &lt;template&gt;
+                    ...
+                &lt;/template&gt;
+            &lt;/dom-module&gt;
+
+            &lt;script&gt;
+                Polymer({
+                    is: 'unique-id',
+                    ...
+                });
+            &lt;/script&gt;
                 </code>
             </pre>
         </p>
@@ -206,9 +208,8 @@
             Use data binding in your markup to fill your template with data:
             <pre>
                 <code>
-    &lt;img src="{{post.avatar}}" width="70" height="70"&gt;
-    &lt;h2&gt;{{post.username}}&lt;/h2&gt;
-    &lt;p&gt;{{post.text}}&lt;/p&gt;
+    &lt;img src="[[item.avatar]]" width="70" height="70"&gt;
+    &lt;h2>[[item.username]]&lt;h2&gt;
                 </code>
             </pre>
         </p>
@@ -220,22 +221,11 @@
             The <code>core-ajax</code> component in <a href="#code/public/post-service/post-service.html" class="shortcut">post-service</a> element is used to call backend REST services from Polymer:
             <pre>
                 <code>
-    &lt;core-ajax id="ajax"
-        auto
-        url="/api/posts"
-        on-core-response="{{postsLoaded}}"
-        handleAs="json"&gt;
-    &lt;/core-ajax&gt;
-                </code>
-            </pre>
-        </p>
-        <p>
-            The Function <code>postsLoaded</code> binds response to the <code>posts</code> element attribute:
-            <pre>
-                <code>
-    postsLoaded: function() {
-        this.posts = this.$.ajax.response.slice(0);
-    },
+    &lt;iron-ajax id="ajax"
+               url="/api/posts"
+               handle-as="json"
+               last-response="{{posts}}"&gt;
+    &lt;/iron-ajax&gt;
                 </code>
             </pre>
         </p>
@@ -244,7 +234,7 @@
             The <code>posts</code> element attribute is public and can be used by other elements:
             <pre>
                 <code>
-    &lt;polymer-element name="post-service" attributes="posts"&gt;
+    &lt;post-service id="service" posts="{{posts}}" ...&gt;&lt;/post-service&gt;
                 </code>
             </pre>
         </p>
@@ -254,24 +244,23 @@
             Specify the HTTP method, url, body and contentType:
             <pre>
                 <code>
-    &lt;core-ajax id="likeCall"
-               method="PUT"
-               url="/api/post/{{id}}/like"
-               body='{"favorite":{{isFavorite}}}'
-               contentType="application/json"
-               handleAs="json"&gt;
-    &lt;/core-ajax&gt;
+    &lt;iron-ajax id="likeCall"
+               method="PATCH"
+               content-type="application/json"
+               handle-as="json"
+               on-response="refresh"&gt;
+    &lt;/iron-ajax&gt;
                 </code>
             </pre>
         </p>
         <p>
-            To make the call bind your parameters and invoke <code>go</code> method on the <code>like-call</code> <code>core-ajax</code> component:
+            To make the call bind your parameters and invoke <code>go</code> method on the <code>like-call</code> <code>iron-ajax</code> component:
             <pre>
                 <code>
-    setFavorite: function(uid, isFavorite) {
-        this.id = uid;
-        this.isFavorite = isFavorite;
-        this.$.likeCall.go();
+    setFavorite: function(id, isFavorite) {
+        this.$.likeCall.url = '/api/post/' + id + '/like';
+        this.$.likeCall.body = JSON.stringify({ "favorite": isFavorite });
+        this.$.likeCall.generateRequest();
     }
                 </code>
             </pre>
