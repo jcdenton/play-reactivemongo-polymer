@@ -1,16 +1,18 @@
+import javax.inject.Inject
 
-import play.api.libs.iteratee.Enumerator
-import play.api.libs.json.Json
-import play.api.{Logger, Application, GlobalSettings}
-import play.modules.reactivemongo.ReactiveMongoPlugin
-import play.modules.reactivemongo.json.collection.JSONCollection
 import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.libs.iteratee.Enumerator
+import play.api.libs.json.Json
+import play.api.{ Logger, Application, GlobalSettings }
 
-object Global extends GlobalSettings {
+import play.modules.reactivemongo.ReactiveMongoApi
+import play.modules.reactivemongo.json.collection.JSONCollection
 
-  def db = ReactiveMongoPlugin.db
-  def collection = db.collection[JSONCollection]("posts")
+class Global @Inject() (
+  val reactiveMongoApi: ReactiveMongoApi) extends GlobalSettings {
+
+  def collection = reactiveMongoApi.db.collection[JSONCollection]("posts")
 
   val posts = List(
     Json.obj(
@@ -65,13 +67,16 @@ object Global extends GlobalSettings {
 
   override def onStart(app: Application) {
     Logger.info("Application has started")
-    collection.bulkInsert(Enumerator.enumerate(posts))
-      .foreach(i => Logger.info("Database was initialized"))
+
+    collection.bulkInsert(posts.toStream, ordered = true).
+      foreach(i => Logger.info("Database was initialized"))
   }
 
   override def onStop(app: Application) {
     Logger.info("Application shutdown...")
-    collection.drop()
-      .foreach(b => if (b) Logger.info("Database collection dropped"))
+
+    collection.drop().onComplete {
+      case _ => Logger.info("Database collection dropped")
+    }
   }
 }
