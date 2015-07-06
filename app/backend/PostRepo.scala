@@ -1,39 +1,39 @@
 package backend
 
-import play.api.Play.current
-import play.api.libs.json.{JsObject, Json}
-import play.modules.reactivemongo.ReactiveMongoPlugin
-import play.modules.reactivemongo.json.collection.JSONCollection
-import reactivemongo.bson.BSONDocument
-import reactivemongo.core.commands.LastError
-import play.modules.reactivemongo.json.BSONFormats._
+import scala.concurrent.{ ExecutionContext, Future }
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import play.api.Play.current
+import play.api.libs.json.{ JsObject, Json }
+
+import reactivemongo.bson.BSONDocument
+import reactivemongo.api.commands.WriteResult
+
+import play.modules.reactivemongo.ReactiveMongoApi
+import play.modules.reactivemongo.json.collection.JSONCollection
 
 trait PostRepo {
-  def db = ReactiveMongoPlugin.db
+  def find()(implicit ec: ExecutionContext): Future[List[JsObject]]
 
-  protected def collection = db.collection[JSONCollection]("posts")
+  def update(selector: BSONDocument, update: BSONDocument)(implicit ec: ExecutionContext): Future[WriteResult]
 
-  def find(): Future[List[JsObject]]
-  def update(selector: BSONDocument, update: BSONDocument): Future[LastError]
-  def remove(document: BSONDocument): Future[LastError]
-  def save(document: BSONDocument): Future[LastError]
+  def remove(document: BSONDocument)(implicit ec: ExecutionContext): Future[WriteResult]
+
+  def save(document: BSONDocument)(implicit ec: ExecutionContext): Future[WriteResult]
 }
 
-object PostMongoRepo extends PostRepo {
-  override def find(): Future[List[JsObject]] = {
-    collection.find(Json.obj())
-      .cursor[JsObject]
-      .collect[List]()
-  }
+class PostMongoRepo(reactiveMongoApi: ReactiveMongoApi) extends PostRepo {
+  // BSON-JSON conversions
+  import play.modules.reactivemongo.json._, ImplicitBSONHandlers._
 
-  override def update(selector: BSONDocument, update: BSONDocument): Future[LastError] = {
-    collection.update(selector, update)
-  }
+  protected def collection =
+    reactiveMongoApi.db.collection[JSONCollection]("posts")
 
-  override def remove(document: BSONDocument): Future[LastError] = collection.remove(document)
+  def find()(implicit ec: ExecutionContext): Future[List[JsObject]] =
+    collection.find(Json.obj()).cursor[JsObject].collect[List]()
 
-  override def save(document: BSONDocument): Future[LastError] = collection.save(document)
+  def update(selector: BSONDocument, update: BSONDocument)(implicit ec: ExecutionContext): Future[WriteResult] = collection.update(selector, update)
+
+  def remove(document: BSONDocument)(implicit ec: ExecutionContext): Future[WriteResult] = collection.remove(document)
+
+  def save(document: BSONDocument)(implicit ec: ExecutionContext): Future[WriteResult] = collection.save(document)
 }

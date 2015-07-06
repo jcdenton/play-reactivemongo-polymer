@@ -1,18 +1,23 @@
 package controllers
 
-import backend.PostRepo
-import controllers.PostFields.{Id, Avatar, Favorite, Text, Username}
-import org.specs2.matcher.{Expectable, Matcher}
-import org.specs2.mock.Mockito
+import scala.concurrent.Future
+
 import play.api.libs.json._
 import play.api.mvc._
 import play.api.test._
+import play.api.test.Helpers._
+
 import reactivemongo.bson.BSONDocument
-import reactivemongo.core.commands.LastError
+import reactivemongo.api.commands.WriteResult
 
-import scala.concurrent.Future
+import org.specs2.matcher.{ Expectable, Matcher }
+import org.specs2.mock.Mockito
 
-object PostsSpec extends PlaySpecification with Results with Mockito {
+import backend.PostRepo
+import controllers.PostFields.{Id, Avatar, Favorite, Text, Username}
+
+object PostsSpec extends org.specs2.mutable.Specification
+    with Results with Mockito {
 
   val mockPostRepo = mock[PostRepo]
 
