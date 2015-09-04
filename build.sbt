@@ -12,9 +12,7 @@ val reactiveMongoVersion = "0.11.6.play24"
 
 libraryDependencies ++= Seq(
   "org.reactivemongo" %% "play2-reactivemongo" % reactiveMongoVersion,
-  "org.reactivemongo" %% "reactivemongo-extensions-json" % reactiveMongoVersion,
-  "org.specs2" %% "specs2-core" % "2.4.9" % "test",
-  "org.specs2" %% "specs2-junit" % "2.4.9" % "test"
+  "org.reactivemongo" %% "reactivemongo-extensions-json" % reactiveMongoVersion
 )
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
